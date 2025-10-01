@@ -1,0 +1,30 @@
+CONTRATO DE PRESTACIÓN DE SERVICIOS
+
+Entre los suscritos, [NOMBRE DE LA EMPRESA], identificada con NIT [NÚMERO], representada legalmente por [NOMBRE DEL REPRESENTANTE], en su calidad de contratista, y [NOMBRE DEL CLIENTE], identificado con cédula [NÚMERO], en su calidad de contratante, se ha celebrado el presente contrato de prestación de servicios, el cual se regirá por las siguientes cláusulas:
+
+PRIMERA: OBJETO. El objeto del presente contrato es la prestación de servicios de consultoría en [ÁREA ESPECÍFICA] por parte del contratista al contratante.
+
+SEGUNDA: OBLIGACIONES DEL CONTRATISTA. El contratista se compromete a:
+a) Prestar los servicios de manera profesional y diligente
+b) Cumplir con los plazos establecidos
+c) Mantener la confidencialidad de la información recibida
+d) Entregar los informes y documentos requeridos
+
+TERCERA: OBLIGACIONES DEL CONTRATANTE. El contratante se compromete a:
+a) Pagar los honorarios acordados en los plazos establecidos
+b) Proporcionar la información necesaria para la prestación del servicio
+c) Facilitar el acceso a las instalaciones cuando sea necesario
+
+CUARTA: VALOR Y FORMA DE PAGO. El valor total del contrato es de $[CANTIDAD] pesos colombianos, los cuales serán pagados de la siguiente manera: [FORMA DE PAGO].
+
+QUINTA: PLAZO. El presente contrato tendrá una duración de [PERÍODO] meses, contados a partir de la fecha de su suscripción.
+
+SEXTA: TERMINACIÓN. El presente contrato podrá ser terminado por mutuo acuerdo o por incumplimiento de cualquiera de las partes.
+
+SÉPTIMA: LEY APLICABLE. El presente contrato se regirá por las leyes de la República de Colombia.
+
+En constancia de lo anterior, se firma en [CIUDAD], a los [DÍA] días del mes de [MES] de [AÑO].
+
+CONTRATISTA: _________________ CONTRATANTE: _________________
+[NOMBRE] [NOMBRE]
+C.C. [NÚMERO] C.C. [NÚMERO]
