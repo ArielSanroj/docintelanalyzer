@@ -22,7 +22,11 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Debug: Confirm NVIDIA API key
-nvidia_key = os.getenv('NVIDIA_API_KEY') or st.secrets.get('NVIDIA_API_KEY')
+try:
+    import streamlit as st
+    nvidia_key = os.getenv('NVIDIA_API_KEY') or st.secrets.get('NVIDIA_API_KEY')
+except:
+    nvidia_key = os.getenv('NVIDIA_API_KEY')
 print(f"NVIDIA_API_KEY loaded: {'Yes' if nvidia_key else 'No'}")
 
 # Initialize database
@@ -105,7 +109,8 @@ if __name__ == "__main__":
                     query = os.path.splitext(confirmed_source)[0] if confirmed_source else "Documento sin título"
                 
                 # Prepare initial state
-                initial_state = AgentState(
+                import database  # Import the module here to avoid undefined name error
+                initial_state = database.AgentState(
                     query=query,
                     source_type=source_type,
                     confirmed_source=confirmed_source,
@@ -144,6 +149,7 @@ if __name__ == "__main__":
                 if lovable_integration and hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
                     try:
                         # Format data for Lovable
+                        import database  # Import the module here to avoid undefined name error
                         lovable_data = format_document_for_lovable(
                             document_name=confirmed_source,
                             summary=result['final_summary'],
@@ -231,13 +237,13 @@ if __name__ == "__main__":
                         st.error("Error al eliminar el informe")
 
     # Chat interface
-    if 'current_summary' in st.session_state and st_session_state.current_summary:
+    if 'current_summary' in st.session_state and st.session_state.current_summary:
         st.subheader("💬 Chat sobre el Documento")
         st.write("Puede hacer preguntas sobre el documento analizado:")
         
         # Debug info (can be removed in production)
         with st.expander("🔍 Información de Debug (Click para ver)"):
-            doc_text_length = len(st_session_state.get('current_doc_text', ''))
+            doc_text_length = len(st.session_state.get('current_doc_text', ''))
             st.write(f"**Longitud del texto del documento:** {doc_text_length} caracteres")
             if doc_text_length > 0:
                 st.write(f"**Vista previa del documento:** {st_session_state.get('current_doc_text', '')[:500]}...")
