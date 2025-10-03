@@ -5,12 +5,14 @@ import uuid
 import json
 import warnings
 import logging
+from datetime import datetime
 
 # Import our common modules
 from database import init_db, save_report, delete_report
 from docsreview import workflow, AgentState, llm
 from rag_system import RAGSystem
 from rag_llm_integration import RAGLLMIntegration
+from lovable_integration import create_lovable_integration, format_document_for_lovable
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
@@ -24,8 +26,24 @@ logger = logging.getLogger(__name__)
 nvidia_key = os.getenv('NVIDIA_API_KEY') or st.secrets.get('NVIDIA_API_KEY')
 print(f"NVIDIA_API_KEY loaded: {'Yes' if nvidia_key else 'No'}")
 
+# Debug: Confirm Lovable API key
+lovable_key = os.getenv('LOVABLE_API_KEY') or st.secrets.get('LOVABLE_API_KEY')
+print(f"LOVABLE_API_KEY loaded: {'Yes' if lovable_key else 'No'}")
+
 # Initialize database
 init_db()
+
+# Initialize Lovable integration
+lovable_integration = None
+if lovable_key:
+    try:
+        lovable_integration = create_lovable_integration(lovable_key)
+        logger.info("Lovable integration initialized successfully")
+    except Exception as e:
+        logger.warning(f"Failed to initialize Lovable integration: {e}")
+        lovable_integration = None
+else:
+    logger.info("Lovable integration not available - no API key provided")
 
 # All workflow logic is now imported from docsreview.py
 
@@ -36,6 +54,41 @@ if __name__ == "__main__":
     st.set_page_config(layout="wide")
     st.title("Generador de Resúmenes Ejecutivos")
     st.write("Suba un PDF o ingrese una URL para generar un resumen ejecutivo profesional. Fecha: 26 de septiembre de 2025, 06:16 AM -05.")
+    
+    # Lovable Integration Status
+    if lovable_integration:
+        st.success("🔗 Integración con Lovable activa")
+    else:
+        st.info("ℹ️ Integración con Lovable no disponible (falta API key)")
+
+    # Lovable Project Management
+    if lovable_integration:
+        with st.expander("🔗 Gestión de Proyectos Lovable", expanded=False):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                project_name = st.text_input("Nombre del Proyecto", value="Análisis de Documentos", key="lovable_project")
+                if st.button("Crear/Usar Proyecto"):
+                    try:
+                        project = lovable_integration.setup_project(project_name, "Proyecto de análisis de documentos")
+                        st.success(f"Proyecto configurado: {project.name}")
+                        st.session_state.lovable_project = project
+                    except Exception as e:
+                        st.error(f"Error configurando proyecto: {str(e)}")
+            
+            with col2:
+                if st.button("Ver Dashboard"):
+                    try:
+                        if hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
+                            dashboard_data = lovable_integration.get_project_dashboard_data()
+                            st.write("**Dashboard del Proyecto:**")
+                            st.write(f"- Total documentos: {dashboard_data['total_documents']}")
+                            st.write(f"- Análisis: {dashboard_data['analysis_documents']}")
+                            st.write(f"- Historiales de chat: {dashboard_data['chat_histories']}")
+                        else:
+                            st.warning("Primero configure un proyecto")
+                    except Exception as e:
+                        st.error(f"Error obteniendo dashboard: {str(e)}")
 
     # Input fields
     query = st.text_input("Keywords de búsqueda (opcional)", placeholder="Ej: contrato, términos, cláusulas, etc.")
@@ -100,6 +153,42 @@ if __name__ == "__main__":
                     st.success(f"Resumen ejecutivo guardado con ID: {report_id}")
                 else:
                     st.error("Error al guardar el informe en la base de datos")
+                
+                # Upload to Lovable if integration is available
+                if lovable_integration and hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
+                    try:
+                        # Format data for Lovable
+                        lovable_data = format_document_for_lovable(
+                            document_name=confirmed_source,
+                            summary=result['final_summary'],
+                            references=result.get('references', []),
+                            chat_history=[]  # Will be updated when chat is used
+                        )
+                        
+                        # Upload analysis result
+                        lovable_doc = lovable_integration.upload_analysis_result(
+                            document_name=confirmed_source,
+                            summary=result['final_summary'],
+                            references=result.get('references', []),
+                            metadata={
+                                "report_id": report_id,
+                                "query": query,
+                                "language": language,
+                                "source_type": source_type,
+                                "analysis_timestamp": datetime.now().isoformat()
+                            }
+                        )
+                        
+                        st.success(f"📤 Análisis subido a Lovable: {lovable_doc.name}")
+                        
+                        # Store Lovable document ID for later chat sync
+                        st.session_state.lovable_document_id = lovable_doc.id
+                        
+                    except Exception as e:
+                        st.warning(f"⚠️ Error subiendo a Lovable: {str(e)}")
+                        logger.error(f"Lovable upload error: {e}")
+                elif lovable_integration:
+                    st.info("💡 Configure un proyecto Lovable para subir automáticamente los análisis")
 
                 # Store in session state for display
                 if 'reports' not in st.session_state:
@@ -168,6 +257,14 @@ if __name__ == "__main__":
                 st.write(f"**Vista previa del documento:** {st.session_state.get('current_doc_text', '')[:500]}...")
                 st.write("**¿El texto contiene 'GMF'?**", "Sí" if "GMF" in st.session_state.get('current_doc_text', '').upper() else "No")
                 st.write("**¿El texto contiene 'ahorro'?**", "Sí" if "ahorro" in st.session_state.get('current_doc_text', '').lower() else "No")
+                
+                # Generic debug: Check if first word of last prompt exists in document
+                if st.session_state.chat_history:
+                    last_prompt = st.session_state.chat_history[-1]["content"] if st.session_state.chat_history[-1]["role"] == "user" else ""
+                    if last_prompt:
+                        first_word = last_prompt.split()[0] if last_prompt.split() else ""
+                        if first_word:
+                            st.write(f"**Contiene '{first_word}':**", "Sí" if first_word.upper() in st.session_state.get('current_doc_text', '').upper() else "No")
             else:
                 st.warning("⚠️ No se encontró texto del documento en la sesión")
         
@@ -191,8 +288,8 @@ if __name__ == "__main__":
                     # Crear nuevo sistema RAG
                     st.session_state.rag_system = RAGSystem()
                     
-                    # Procesar el documento actual
-                    st.session_state.rag_system.process_document(doc_text)
+                    # Procesar el documento actual con nuevo default
+                    st.session_state.rag_system.process_document(doc_text, chunk_size=1500)
                     
                     # Crear integración RAG + LLM
                     st.session_state.rag_llm_integration = RAGLLMIntegration(llm, st.session_state.rag_system)
@@ -267,6 +364,10 @@ if __name__ == "__main__":
                                 # Display the answer
                                 st.write(rag_response.answer)
                                 
+                                # Show confidence warning if low
+                                if rag_response.confidence_score < 0.5:
+                                    st.warning("⚠️ Respuesta basada en chunks parciales; doc grande, considera query más específica.")
+                                
                                 # Show relevant chunks in expandable section
                                 if rag_response.relevant_chunks:
                                     with st.expander("🔍 Información relevante encontrada"):
@@ -288,6 +389,17 @@ if __name__ == "__main__":
                                 
                                 # Update RAG integration conversation history
                                 rag_integration.update_conversation_history(prompt, rag_response)
+                                
+                                # Sync chat history to Lovable if available
+                                if lovable_integration and hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
+                                    try:
+                                        # Sync current chat history
+                                        lovable_integration.sync_chat_history(
+                                            chat_history=st.session_state.chat_history,
+                                            document_name=st.session_state.get('confirmed_source', 'Documento actual')
+                                        )
+                                    except Exception as e:
+                                        logger.warning(f"Failed to sync chat to Lovable: {e}")
                             
                     except Exception as e:
                         error_msg = f"Error al generar respuesta: {str(e)}"
@@ -299,7 +411,7 @@ if __name__ == "__main__":
                         logger.error(f"Document text available: {len(st.session_state.get('current_doc_text', ''))} chars")
         
         # Debug and clear buttons
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         with col1:
             if st.button("🗑️ Limpiar Chat"):
                 st.session_state.chat_history = []
@@ -329,6 +441,20 @@ if __name__ == "__main__":
                             st.write(f"- {key}: {value}")
                 else:
                     st.write("Sistema RAG no inicializado")
+        
+        with col4:
+            if lovable_integration and hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
+                if st.button("📤 Sincronizar Chat"):
+                    try:
+                        lovable_integration.sync_chat_history(
+                            chat_history=st.session_state.chat_history,
+                            document_name=st.session_state.get('confirmed_source', 'Documento actual')
+                        )
+                        st.success("Chat sincronizado con Lovable")
+                    except Exception as e:
+                        st.error(f"Error sincronizando: {str(e)}")
+            else:
+                st.button("📤 Sincronizar Chat", disabled=True, help="Configure Lovable primero")
         
         # Legacy debug button
         if st.button("🔍 Ver Prompt Completo (Legacy)"):
