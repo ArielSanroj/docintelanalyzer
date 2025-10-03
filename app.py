@@ -12,7 +12,6 @@ from database import init_db, save_report, delete_report
 from docsreview import workflow
 from rag_system import RAGSystem
 from rag_llm_integration import RAGLLMIntegration
-from lovable_integration import create_lovable_integration, format_document_for_lovable
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
@@ -26,24 +25,11 @@ logger = logging.getLogger(__name__)
 nvidia_key = os.getenv('NVIDIA_API_KEY') or st.secrets.get('NVIDIA_API_KEY')
 print(f"NVIDIA_API_KEY loaded: {'Yes' if nvidia_key else 'No'}")
 
-# Debug: Confirm Lovable API key
-lovable_key = os.getenv('LOVABLE_API_KEY') or st.secrets.get('LOVABLE_API_KEY')
-print(f"LOVABLE_API_KEY loaded: {'Yes' if lovable_key else 'No'}")
-
 # Initialize database
 init_db()
 
-# Initialize Lovable integration
+# Lovable integration removed from this deployment. All related UI and env var handling has been disabled.
 lovable_integration = None
-if lovable_key:
-    try:
-        lovable_integration = create_lovable_integration(lovable_key)
-        logger.info("Lovable integration initialized successfully")
-    except Exception as e:
-        logger.warning(f"Failed to initialize Lovable integration: {e}")
-        lovable_integration = None
-else:
-    logger.info("Lovable integration not available - no API key provided")
 
 # All workflow logic is now imported from docsreview.py
 
