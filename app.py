@@ -231,22 +231,22 @@ if __name__ == "__main__":
                         st.error("Error al eliminar el informe")
 
     # Chat interface
-    if 'current_summary' in st.session_state and st.session_state.current_summary:
+    if 'current_summary' in st.session_state and st_session_state.current_summary:
         st.subheader("💬 Chat sobre el Documento")
         st.write("Puede hacer preguntas sobre el documento analizado:")
         
         # Debug info (can be removed in production)
         with st.expander("🔍 Información de Debug (Click para ver)"):
-            doc_text_length = len(st.session_state.get('current_doc_text', ''))
+            doc_text_length = len(st_session_state.get('current_doc_text', ''))
             st.write(f"**Longitud del texto del documento:** {doc_text_length} caracteres")
             if doc_text_length > 0:
-                st.write(f"**Vista previa del documento:** {st.session_state.get('current_doc_text', '')[:500]}...")
-                st.write("**¿El texto contiene 'GMF'?**", "Sí" if "GMF" in st.session_state.get('current_doc_text', '').upper() else "No")
-                st.write("**¿El texto contiene 'ahorro'?**", "Sí" if "ahorro" in st.session_state.get('current_doc_text', '').lower() else "No")
+                st.write(f"**Vista previa del documento:** {st_session_state.get('current_doc_text', '')[:500]}...")
+                st.write("**¿El texto contiene 'GMF'?**", "Sí" if "GMF" in st_session_state.get('current_doc_text', '').upper() else "No")
+                st.write("**¿El texto contiene 'ahorro'?**", "Sí" if "ahorro" in st_session_state.get('current_doc_text', '').lower() else "No")
                 
                 # Generic debug: Check if first word of last prompt exists in document
-                if st.session_state.chat_history:
-                    last_prompt = st.session_state.chat_history[-1]["content"] if st_session_state.chat_history[-1]["role"] == "user" else ""
+                if st_session_state.chat_history:
+                    last_prompt = st_session_state.chat_history[-1]["content"] if st_session_state.chat_history[-1]["role"] == "user" else ""
                     if last_prompt:
                         first_word = last_prompt.split()[0] if last_prompt.split() else ""
                         if first_word:
@@ -255,8 +255,8 @@ if __name__ == "__main__":
                 st.warning("⚠️ No se encontró texto del documento en la sesión")
         
         # Initialize chat history and RAG system
-        if 'chat_history' not in st.session_state:
-            st.session_state.chat_history = []
+        if 'chat_history' not in st_session_state:
+            st_session_state.chat_history = []
         
         # Mostrar información del documento actual
         current_doc = st_session_state.get('current_doc_text', '')
@@ -268,11 +268,11 @@ if __name__ == "__main__":
         
         # Initialize RAG system if document is available
         doc_text = st_session_state.get('current_doc_text', '')
-        if doc_text and 'rag_system' not in st.session_state:
+        if doc_text and 'rag_system' not in st_session_state:
             with st.spinner("Inicializando sistema RAG para el documento actual..."):
                 try:
                     # Crear nuevo sistema RAG
-                    st.session_state.rag_system = RAGSystem()
+                    st_session_state.rag_system = RAGSystem()
                     
                     # Procesar el documento actual con nuevo default
                     st_session_state.rag_system.process_document(doc_text, chunk_size=1500)
