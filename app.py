@@ -9,7 +9,7 @@ from datetime import datetime
 
 # Import our common modules
 from database import init_db, save_report, delete_report
-from docsreview import workflow, AgentState, llm
+from docsreview import workflow
 from rag_system import RAGSystem
 from rag_llm_integration import RAGLLMIntegration
 from lovable_integration import create_lovable_integration, format_document_for_lovable
@@ -128,7 +128,7 @@ if __name__ == "__main__":
                     file_path=file_path,
                     doc_url=confirmed_source if source_type == "url" else None,
                     doc_text="",  # Will be populated by fetch_node
-                    summaries=[]  # Initialize summaries to avoid NoneType error
+                    summaries=[],  # Initialize summaries to avoid NoneType error
                 )
 
                 # Invoke workflow with recursion limit
@@ -260,11 +260,11 @@ if __name__ == "__main__":
                 
                 # Generic debug: Check if first word of last prompt exists in document
                 if st.session_state.chat_history:
-                    last_prompt = st.session_state.chat_history[-1]["content"] if st.session_state.chat_history[-1]["role"] == "user" else ""
+                    last_prompt = st.session_state.chat_history[-1]["content"] if st_session_state.chat_history[-1]["role"] == "user" else ""
                     if last_prompt:
                         first_word = last_prompt.split()[0] if last_prompt.split() else ""
                         if first_word:
-                            st.write(f"**Contiene '{first_word}':**", "Sí" if first_word.upper() in st.session_state.get('current_doc_text', '').upper() else "No")
+                            st.write(f"**Contiene '{first_word}':**", "Sí" if first_word.upper() in st_session_state.get('current_doc_text', '').upper() else "No")
             else:
                 st.warning("⚠️ No se encontró texto del documento en la sesión")
         
@@ -273,15 +273,15 @@ if __name__ == "__main__":
             st.session_state.chat_history = []
         
         # Mostrar información del documento actual
-        current_doc = st.session_state.get('current_doc_text', '')
+        current_doc = st_session_state.get('current_doc_text', '')
         if current_doc:
-            doc_source = st.session_state.get('confirmed_source', 'Documento actual')
+            doc_source = st_session_state.get('confirmed_source', 'Documento actual')
             st.info(f"📄 **Documento activo:** {doc_source} ({len(current_doc)} caracteres)")
         else:
             st.warning("⚠️ No hay documento cargado. Genere un resumen ejecutivo para poder hacer preguntas.")
         
         # Initialize RAG system if document is available
-        doc_text = st.session_state.get('current_doc_text', '')
+        doc_text = st_session_state.get('current_doc_text', '')
         if doc_text and 'rag_system' not in st.session_state:
             with st.spinner("Inicializando sistema RAG para el documento actual..."):
                 try:
@@ -289,13 +289,13 @@ if __name__ == "__main__":
                     st.session_state.rag_system = RAGSystem()
                     
                     # Procesar el documento actual con nuevo default
-                    st.session_state.rag_system.process_document(doc_text, chunk_size=1500)
+                    st_session_state.rag_system.process_document(doc_text, chunk_size=1500)
                     
                     # Crear integración RAG + LLM
-                    st.session_state.rag_llm_integration = RAGLLMIntegration(llm, st.session_state.rag_system)
+                    st_session_state.rag_llm_integration = RAGLLMIntegration(llm, st_session_state.rag_system)
                     
                     # Mostrar estadísticas del documento procesado
-                    stats = st.session_state.rag_system.get_document_stats()
+                    stats = st_session_state.rag_system.get_document_stats()
                     st.success(f"✅ Sistema RAG inicializado correctamente")
                     st.info(f"📄 Documento procesado: {stats['total_chunks']} chunks, {stats['total_words']} palabras")
                     
@@ -305,13 +305,13 @@ if __name__ == "__main__":
                     st.error(f"❌ Error inicializando RAG: {str(e)}")
                     logger.error(f"RAG initialization error: {e}")
                     # Limpiar estado en caso de error
-                    if 'rag_system' in st.session_state:
-                        del st.session_state.rag_system
-                    if 'rag_llm_integration' in st.session_state:
-                        del st.session_state.rag_llm_integration
+                    if 'rag_system' in st_session_state:
+                        del st_session_state.rag_system
+                    if 'rag_llm_integration' in st_session_state:
+                        del st_session_state.rag_llm_integration
         
         # Display chat history
-        for message in st.session_state.chat_history:
+        for message in st_session_state.chat_history:
             with st.chat_message(message["role"]):
                 st.write(message["content"])
                 
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         # Chat input
         if prompt := st.chat_input("Haga una pregunta sobre el documento..."):
             # Add user message to chat history
-            st.session_state.chat_history.append({"role": "user", "content": prompt})
+            st_session_state.chat_history.append({"role": "user", "content": prompt})
             
             # Display user message
             with st.chat_message("user"):
@@ -338,25 +338,25 @@ if __name__ == "__main__":
                 with st.spinner("Analizando documento y generando respuesta..."):
                     try:
                         # Check if RAG system is available
-                        if 'rag_llm_integration' not in st.session_state:
+                        if 'rag_llm_integration' not in st_session_state:
                             st.error("⚠️ Sistema RAG no inicializado. Por favor, genere un resumen ejecutivo primero.")
-                            st.session_state.chat_history.append({
+                            st_session_state.chat_history.append({
                                 "role": "assistant", 
                                 "content": "❌ Error: Sistema RAG no disponible. Genere un resumen ejecutivo primero para poder hacer preguntas sobre el documento."
                             })
                         else:
                             # Verificar que el documento actual esté disponible
-                            current_doc = st.session_state.get('current_doc_text', '')
+                            current_doc = st_session_state.get('current_doc_text', '')
                             if not current_doc:
                                 st.error("⚠️ No hay documento cargado. Por favor, genere un resumen ejecutivo primero.")
-                                st.session_state.chat_history.append({
+                                st_session_state.chat_history.append({
                                     "role": "assistant", 
                                     "content": "❌ Error: No hay documento cargado. Genere un resumen ejecutivo primero."
                                 })
                             else:
                                 # Use RAG + LLM integration
-                                rag_integration = st.session_state.rag_llm_integration
-                                conversation_context = st.session_state.chat_history[-6:] if len(st.session_state.chat_history) > 6 else st.session_state.chat_history
+                                rag_integration = st_session_state.rag_llm_integration
+                                conversation_context = st_session_state.chat_history[-6:] if len(st_session_state.chat_history) > 6 else st_session_state.chat_history
                                 
                                 # Generate enhanced response
                                 rag_response = rag_integration.generate_response(prompt, conversation_context)
@@ -377,7 +377,7 @@ if __name__ == "__main__":
                                             st.write("---")
                                 
                                 # Update conversation history with RAG info
-                                st.session_state.chat_history.append({
+                                st_session_state.chat_history.append({
                                     "role": "assistant", 
                                     "content": rag_response.answer,
                                     "rag_info": {
@@ -391,12 +391,12 @@ if __name__ == "__main__":
                                 rag_integration.update_conversation_history(prompt, rag_response)
                                 
                                 # Sync chat history to Lovable if available
-                                if lovable_integration and hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
+                                if lovable_integration and hasattr(st_session_state, 'lovable_project') and st_session_state.lovable_project:
                                     try:
                                         # Sync current chat history
                                         lovable_integration.sync_chat_history(
-                                            chat_history=st.session_state.chat_history,
-                                            document_name=st.session_state.get('confirmed_source', 'Documento actual')
+                                            chat_history=st_session_state.chat_history,
+                                            document_name=st_session_state.get('confirmed_source', 'Documento actual')
                                         )
                                     except Exception as e:
                                         logger.warning(f"Failed to sync chat to Lovable: {e}")
@@ -404,38 +404,38 @@ if __name__ == "__main__":
                     except Exception as e:
                         error_msg = f"Error al generar respuesta: {str(e)}"
                         st.write(error_msg)
-                        st.session_state.chat_history.append({"role": "assistant", "content": error_msg})
+                        st_session_state.chat_history.append({"role": "assistant", "content": error_msg})
                         
                         # Debug: Log the error details
                         logger.error(f"RAG Chat error: {str(e)}")
-                        logger.error(f"Document text available: {len(st.session_state.get('current_doc_text', ''))} chars")
+                        logger.error(f"Document text available: {len(st_session_state.get('current_doc_text', ''))} chars")
         
         # Debug and clear buttons
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             if st.button("🗑️ Limpiar Chat"):
-                st.session_state.chat_history = []
+                st_session_state.chat_history = []
                 st.rerun()
         
         with col2:
-            if st.button("🔄 Reiniciar RAG"):
-                if 'rag_system' in st.session_state:
-                    del st.session_state.rag_system
-                if 'rag_llm_integration' in st.session_state:
-                    del st.session_state.rag_llm_integration
+            if st_button("🔄 Reiniciar RAG"):
+                if 'rag_system' in st_session_state:
+                    del st_session_state.rag_system
+                if 'rag_llm_integration' in st_session_state:
+                    del st_session_state.rag_llm_integration
                 st.success("Sistema RAG reiniciado")
                 st.rerun()
         
         with col3:
-            if st.button("📊 Info RAG"):
-                if 'rag_system' in st.session_state:
-                    stats = st.session_state.rag_system.get_document_stats()
+            if st_button("📊 Info RAG"):
+                if 'rag_system' in st_session_state:
+                    stats = st_session_state.rag_system.get_document_stats()
                     st.write("**Estadísticas del documento:**")
                     for key, value in stats.items():
                         st.write(f"- {key}: {value}")
                     
-                    if 'rag_llm_integration' in st.session_state:
-                        conv_summary = st.session_state.rag_llm_integration.get_conversation_summary()
+                    if 'rag_llm_integration' in st_session_state:
+                        conv_summary = st_session_state.rag_llm_integration.get_conversation_summary()
                         st.write("**Resumen de conversación:**")
                         for key, value in conv_summary.items():
                             st.write(f"- {key}: {value}")
@@ -443,22 +443,22 @@ if __name__ == "__main__":
                     st.write("Sistema RAG no inicializado")
         
         with col4:
-            if lovable_integration and hasattr(st.session_state, 'lovable_project') and st.session_state.lovable_project:
-                if st.button("📤 Sincronizar Chat"):
+            if lovable_integration and hasattr(st_session_state, 'lovable_project') and st_session_state.lovable_project:
+                if st_button("📤 Sincronizar Chat"):
                     try:
                         lovable_integration.sync_chat_history(
-                            chat_history=st.session_state.chat_history,
-                            document_name=st.session_state.get('confirmed_source', 'Documento actual')
+                            chat_history=st_session_state.chat_history,
+                            document_name=st_session_state.get('confirmed_source', 'Documento actual')
                         )
                         st.success("Chat sincronizado con Lovable")
                     except Exception as e:
                         st.error(f"Error sincronizando: {str(e)}")
             else:
-                st.button("📤 Sincronizar Chat", disabled=True, help="Configure Lovable primero")
+                st_button("📤 Sincronizar Chat", disabled=True, help="Configure Lovable primero")
         
         # Legacy debug button
-        if st.button("🔍 Ver Prompt Completo (Legacy)"):
-            doc_text = st.session_state.get('current_doc_text', '')
+        if st_button("🔍 Ver Prompt Completo (Legacy)"):
+            doc_text = st_session_state.get('current_doc_text', '')
             doc_text_sample = doc_text[:5000] if len(doc_text) > 5000 else doc_text
             
             debug_prompt = f"""Eres un asistente de análisis de documentos. Tu única función es extraer y presentar información del documento proporcionado.
