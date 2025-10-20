@@ -1,0 +1,89 @@
+# RAG-Anything Integration Requirements
+# Python 3.13+ environment with latest dependencies
+
+# Core RAG and AI libraries
+raganything>=2.5.0
+langchain>=1.0.0
+langchain-community>=0.4.0
+langchain-core>=1.0.0
+langgraph>=1.0.0
+
+# Embeddings and vector stores
+sentence-transformers>=5.1.0
+faiss-cpu>=1.8.0
+chromadb>=0.5.0
+
+# LLM integrations
+ollama>=0.6.0
+openai>=1.109.0
+anthropic>=0.30.0
+
+# Document processing
+PyMuPDF>=1.26.0
+pytesseract>=0.3.10
+Pillow>=11.0.0
+beautifulsoup4>=4.14.0
+lxml>=5.0.0
+requests>=2.32.0
+
+# Data processing
+numpy>=2.2.0
+pandas>=2.3.0
+scikit-learn>=1.7.0
+scipy>=1.16.0
+
+# RAG-Anything specific dependencies
+lightrag-hku>=1.4.9
+huggingface-hub>=0.35.0
+transformers>=4.57.0
+torch>=2.9.0
+torchvision>=0.24.0
+torchaudio>=2.4.0
+
+# Multimodal processing
+opencv-python>=4.12.0
+matplotlib>=3.10.0
+seaborn>=0.13.0
+
+# Database and storage
+sqlite3
+psycopg2-binary>=2.9.0
+redis>=5.0.0
+
+# Web framework
+streamlit>=1.50.0
+fastapi>=0.119.0
+uvicorn>=0.37.0
+
+# MCP integration
+mcp>=1.0.0
+mcp-server>=1.0.0
+mcp-server-stdio>=1.0.0
+
+# Utilities
+python-dotenv>=1.1.0
+pydantic>=2.11.0
+typing-extensions>=4.15.0
+loguru>=0.7.0
+
+# Development and testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+black>=24.0.0
+flake8>=7.0.0
+mypy>=1.8.0
+
+# Additional RAG-Anything dependencies
+rank-bm25>=0.2.2
+nltk>=3.8.0
+spacy>=3.7.0
+
+# RAG-Anything core dependencies
+mineru[core]>=2.5.0
+tqdm>=4.67.0
+filelock>=3.20.0
+fsspec>=2025.9.0
+packaging>=25.0.0
+pyyaml>=6.0.0
+requests>=2.32.0
+typing-extensions>=4.15.0

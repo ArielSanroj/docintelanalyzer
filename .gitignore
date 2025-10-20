@@ -68,3 +68,4 @@ models/
 # Uploaded files
 uploads/
 /tmp/
+.aider*

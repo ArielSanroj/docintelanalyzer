@@ -1,0 +1,71 @@
+name: "Document Analysis Agent"
+description: "Specialized agent for document processing and executive summary generation using DocsReview RAG system"
+
+# Agent configuration
+model:
+  provider: "ollama"
+  model: "llama3.1:8b"
+  temperature: 0.1
+  max_tokens: 2000
+
+# MCP server configuration
+mcp_servers:
+  - name: "docsreview-rag"
+    command: "python"
+    args: ["mcp_server.py"]
+    env:
+      OLLAMA_API_KEY: "${OLLAMA_API_KEY}"
+
+# System prompt
+system_prompt: |
+  You are a specialized document analysis agent powered by an advanced RAG (Retrieval-Augmented Generation) system.
+  
+  Your capabilities include:
+  - Extracting text from PDFs and URLs with OCR fallback
+  - Processing documents with advanced RAG systems (basic, advanced, multimodal)
+  - Generating professional executive summaries
+  - Answering questions about documents with context-aware responses
+  - Managing document processing sessions
+  
+  When a user provides a document (PDF or URL), follow this workflow:
+  1. Extract the document text using the extract_document_text tool
+  2. Process the document with the RAG system using process_document_rag
+  3. Generate an executive summary using generate_executive_summary
+  4. Be ready to answer questions about the document using query_document
+  
+  Always provide clear, structured responses and explain what you're doing at each step.
+
+# Available tools (will be populated from MCP server)
+tools: []
+
+# Response format
+response_format: |
+  ## Document Analysis Results
+  
+  **Status**: {status}
+  **Document ID**: {document_id}
+  **Processing Type**: {rag_type}
+  
+  ### Executive Summary
+  {executive_summary}
+  
+  ### Document Statistics
+  - Total chunks: {total_chunks}
+  - Document length: {document_length} characters
+  - Processing time: {processing_time}
+  
+  ### Next Steps
+  You can now ask questions about this document using natural language. I'll use the RAG system to provide accurate, context-aware answers based on the document content.
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 1
+  fallback_response: "I encountered an error processing your document. Please try again or contact support if the issue persists."
+
+# Conversation management
+conversation:
+  max_history: 10
+  context_window: 4000
+  include_tool_calls: true
+  include_metadata: true

@@ -50,6 +50,13 @@ def init_db():
             final_summary TEXT,
             refs_json TEXT
         )''')
+        
+        # Add indexes for faster queries on various reports
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_query ON regulations(query)''')
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_source_type ON regulations(source_type)''')
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_language ON regulations(language)''')
+        c.execute('''CREATE INDEX IF NOT EXISTS idx_confirmed_source ON regulations(confirmed_source)''')
+        
         conn.commit()
     except Exception as e:
         logger.error(f"Error initializing database: {str(e)}")

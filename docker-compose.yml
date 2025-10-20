@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  # MCP Server for DocsReview RAG
+  docsreview-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile.mcp
+    environment:
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - PYTHONPATH=/app
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    ports:
+      - "8001:8001"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nanobot for Chat Orchestration
+  nanobot:
+    image: nanobot-ai/nanobot:latest
+    environment:
+      - OLLAMA_API_KEY=${OLLAMA_API_KEY}
+      - MCP_SERVER_URL=http://docsreview-mcp:8001
+    volumes:
+      - ./nanobot_agents:/app/agents
+      - ./nanobot_config:/app/config
+    ports:
+      - "8000:8000"
+    depends_on:
+      - docsreview-mcp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Database (PostgreSQL for production)
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=docsreview
+      - POSTGRES_USER=docsreview
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

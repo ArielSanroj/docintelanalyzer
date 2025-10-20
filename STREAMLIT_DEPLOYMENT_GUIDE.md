@@ -93,9 +93,9 @@ https://YOUR_APP_NAME.streamlit.app
 - 🔄 **Clear Cache**: Use "🔄 Reiniciar RAG" button if issues occur
 - 📊 **Monitor Usage**: Check your NVIDIA API usage limits
 
-## **📱 Embedding in Your Lovable App**
+## **📱 Embedding in Web Applications**
 
-Once deployed, you can embed your Streamlit app in your Lovable webpage:
+Once deployed, you can embed your Streamlit app in any webpage:
 
 ```html
 <iframe 
@@ -126,7 +126,7 @@ After successful deployment:
 2. **Share the URL**: Give access to your team
 3. **Monitor usage**: Check Streamlit Cloud dashboard
 4. **Scale if needed**: Upgrade to paid plan for more resources
-5. **Integrate**: Embed in your Lovable app
+5. **Integrate**: Embed in your web applications
 
 ## **📞 Support**
 

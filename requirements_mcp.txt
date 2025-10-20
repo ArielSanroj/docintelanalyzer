@@ -1,0 +1,37 @@
+# MCP Server Dependencies
+mcp>=1.0.0
+mcp-server>=1.0.0
+mcp-server-stdio>=1.0.0
+
+# Existing RAG Dependencies
+streamlit>=1.38.0
+langchain>=0.3.1
+langgraph>=0.2.50
+requests>=2.31.0
+raganything>=1.0.0
+
+# RAG & Embeddings
+sentence-transformers>=3.0.1
+scikit-learn>=1.5.1
+numpy>=1.24.0,<2.0
+torch>=2.4.1
+rank-bm25>=0.2.2
+
+# Document Processing & OCR
+PyMuPDF>=1.24.9
+pytesseract>=0.3.10
+Pillow>=10.4.0
+beautifulsoup4>=4.12.3
+requests>=2.32.3
+lxml>=5.3.0
+
+# Database & Utils
+python-dotenv>=1.0.0
+
+# Development Tools
+pytest>=8.3.2
+black>=24.8.0
+isort>=5.13.2
+
+# Nanobot Integration (if needed)
+# nanobot-ai>=1.0.0  # Add when available

@@ -1,5 +1,4 @@
 from typing import TypedDict, List
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_core.tools import tool
 from langgraph.graph import StateGraph, END
 from langchain_core.prompts import ChatPromptTemplate
@@ -14,6 +13,7 @@ import json
 # Import our common modules
 from database import init_db
 from ocr_utils import extract_text_from_pdf, extract_text_from_url
+from llm_fallback import get_llm
 
 # Suppress warnings for cleaner output
 warnings.filterwarnings("ignore", category=UserWarning, module="urllib3")
@@ -23,13 +23,13 @@ load_dotenv()
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Debug: Confirm NVIDIA API key
+# Debug: Confirm Ollama API key
 try:
     import streamlit as st
-    nvidia_key = os.getenv('NVIDIA_API_KEY') or st.secrets.get('NVIDIA_API_KEY')
+    ollama_key = os.getenv('OLLAMA_API_KEY') or st.secrets.get('OLLAMA_API_KEY')
 except:
-    nvidia_key = os.getenv('NVIDIA_API_KEY')
-print(f"NVIDIA_API_KEY loaded: {'Yes' if nvidia_key else 'No'}")
+    ollama_key = os.getenv('OLLAMA_API_KEY')
+print(f"OLLAMA_API_KEY loaded: {'Yes' if ollama_key else 'No'}")
 
 # Initialize database
 init_db()
@@ -48,7 +48,8 @@ class AgentState(TypedDict):
 
 # Database initialization is now handled by the database module
 
-llm = ChatNVIDIA(model="meta/llama-3.1-8b-instruct", temperature=0.1)
+# Initialize LLM using the centralized fallback helper which handles Ollama integration
+llm = get_llm()
 
 @tool
 def scan_uploaded_pdf(file_path: str) -> dict:
@@ -78,6 +79,9 @@ def fetch_node(state: AgentState) -> AgentState:
                 new_state['references'] = []
             else:
                 new_state['doc_text'] = result['doc_text']
+                # Truncate for Llama limits if document is too large
+                if len(new_state['doc_text']) > 100000:
+                    new_state['doc_text'] = new_state['doc_text'][:100000] + "\n[Truncado; use RAG para full]"
                 new_state['references'] = [{
                     "code": "Ref1",
                     "file": result['file_path'],
@@ -97,6 +101,9 @@ def fetch_node(state: AgentState) -> AgentState:
         else:
             new_state['doc_url'] = result['doc_url']
             new_state['doc_text'] = result['doc_text']
+            # Truncate for Llama limits if document is too large
+            if len(new_state['doc_text']) > 100000:
+                new_state['doc_text'] = new_state['doc_text'][:100000] + "\n[Truncado; use RAG para full]"
             new_state['references'] = [{
                 "code": "Ref1",
                 "url": result['doc_url'],
@@ -114,17 +121,35 @@ def analyze_node(state: AgentState) -> AgentState:
     if not state.get('doc_text') or state['doc_text'].lower().startswith("error"):
         new_state['summaries'] = ["No se pudo analizar: documento no disponible o inválido para generar resumen ejecutivo."]
     else:
+        # Use a more comprehensive prompt that analyzes the full document
+        doc_text = state['doc_text']
+        query = state['query']
+        language = state['language']
+        
+        # Create a comprehensive analysis prompt
+        analysis_prompt = f"""Analiza este documento y genera un resumen ejecutivo profesional en {language}.
+
+DOCUMENTO COMPLETO:
+{doc_text}
+
+CONSULTA DEL USUARIO: {query}
+
+INSTRUCCIONES:
+1. Lee y analiza TODO el contenido del documento
+2. Identifica el tema principal y los puntos clave
+3. Genera un resumen ejecutivo que:
+   - Sea proporcional al tamaño del documento
+   - Máximo 300 palabras
+   - Explique de manera sucinta y ejecutiva qué dice el documento
+   - Use un tono profesional y formal
+   - Sea claro y directo
+   - Incluya información específica del documento
+
+RESUMEN EJECUTIVO:"""
+        
         prompt = ChatPromptTemplate.from_messages([
-            SystemMessage(content="""Genera un resumen ejecutivo profesional del documento. El resumen debe:
-
-- Ser proporcional al tamaño del documento (corto si es corto, largo si es largo)
-- Máximo 300 palabras
-- Explicar de manera sucinta y ejecutiva qué dice el documento
-- Usar un tono profesional y formal
-- Ser claro y directo, sin secciones adicionales
-
-Solo genera el resumen ejecutivo, sin puntos clave, riesgos, recomendaciones u otras secciones."""),
-            HumanMessage(content=f"Documento: {state['doc_text'][:4000]}\nConsulta: {state['query']}\nIdioma: {state['language']}")
+            SystemMessage(content="Eres un analista de documentos experto. Tu función es generar resúmenes ejecutivos precisos y profesionales basándote en el contenido completo del documento."),
+            HumanMessage(content=analysis_prompt)
         ])
         response = (prompt | llm).invoke({})
         if response.content is None:
@@ -142,19 +167,38 @@ def summarize_node(state: AgentState) -> AgentState:
     if not new_state.get('summaries'):
         new_state['summaries'] = []
     logger.debug(f"summaries after initialization: {new_state['summaries']}")
-    # Solo generar un resumen ejecutivo
+    
+    # Generate a comprehensive executive summary
     summary_type = "Resumen ejecutivo" if state['language'] == "es" else "Executive summary"
+    doc_text = state['doc_text']
+    query = state['query']
+    
+    # Create a detailed analysis prompt
+    analysis_prompt = f"""Analiza este documento en profundidad y genera un {summary_type.lower()} profesional en {state['language']}.
+
+DOCUMENTO COMPLETO:
+{doc_text}
+
+CONSULTA DEL USUARIO: {query}
+
+INSTRUCCIONES DETALLADAS:
+1. Analiza TODO el contenido del documento, no solo las primeras líneas
+2. Identifica el tema principal, objetivos, y puntos clave
+3. Extrae información específica, datos, fechas, nombres, y detalles importantes
+4. Genera un resumen que:
+   - Sea proporcional al tamaño del documento
+   - Máximo 300 palabras
+   - Explique de manera sucinta y ejecutiva qué dice el documento
+   - Use un tono profesional y formal
+   - Sea claro y directo
+   - Incluya información específica y relevante del documento
+   - NO sea genérico ni vago
+
+{summary_type.upper()}:"""
+    
     prompt = ChatPromptTemplate.from_messages([
-        SystemMessage(content=f"""Genera un {summary_type.lower()} profesional en {state['language']} que:
-
-- Sea proporcional al tamaño del documento (corto si es corto, largo si es largo)
-- Máximo 300 palabras
-- Explique de manera sucinta y ejecutiva qué dice el documento
-- Use un tono profesional y formal
-- Sea claro y directo
-
-Solo genera el resumen ejecutivo, sin secciones adicionales."""),
-        HumanMessage(content=f"Documento: {state['doc_text'][:4000]}\nConsulta: {state['query']}")
+        SystemMessage(content=f"Eres un analista de documentos experto. Tu función es generar {summary_type.lower()}s precisos y detallados basándote en el contenido completo del documento."),
+        HumanMessage(content=analysis_prompt)
     ])
     response = (prompt | llm).invoke({})
     if response.content is None:

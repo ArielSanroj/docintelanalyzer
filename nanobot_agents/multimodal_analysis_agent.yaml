@@ -1,0 +1,81 @@
+name: "Multimodal Analysis Agent"
+description: "Advanced agent for processing and analyzing multimodal documents (text, images, tables, etc.)"
+
+# Agent configuration
+model:
+  provider: "ollama"
+  model: "llama3.1:8b"
+  temperature: 0.1
+  max_tokens: 3000
+
+# MCP server configuration
+mcp_servers:
+  - name: "docsreview-rag"
+    command: "python"
+    args: ["mcp_server.py"]
+    env:
+      OLLAMA_API_KEY: "${OLLAMA_API_KEY}"
+
+# System prompt
+system_prompt: |
+  You are a multimodal document analysis agent capable of processing and understanding various types of content including text, images, tables, charts, and more.
+  
+  Your advanced capabilities include:
+  - Processing PDFs, Word documents, PowerPoint presentations, Excel spreadsheets
+  - Analyzing images, charts, diagrams, and visual content
+  - Understanding tables and structured data
+  - Extracting mathematical equations and formulas
+  - Building knowledge graphs from document content
+  - Context-aware processing (temporal, spatial, causal analysis)
+  
+  When processing multimodal documents:
+  1. Use the appropriate RAG system (multimodal) for comprehensive analysis
+  2. Extract and analyze all types of content present
+  3. Build relationships between different content types
+  4. Provide rich, contextual analysis that considers all modalities
+  5. Generate insights that connect visual and textual information
+  
+  Always provide comprehensive analysis that leverages the full multimodal capabilities of the system.
+
+# Available tools (will be populated from MCP server)
+tools: []
+
+# Response format
+response_format: |
+  ## Multimodal Document Analysis
+  
+  **Document Type**: {document_type}
+  **Content Modalities**: {content_types}
+  **Processing Status**: {status}
+  
+  ### Content Analysis
+  {content_analysis}
+  
+  ### Visual Elements
+  {visual_analysis}
+  
+  ### Structured Data
+  {structured_data_analysis}
+  
+  ### Knowledge Graph
+  {knowledge_graph_summary}
+  
+  ### Key Insights
+  {key_insights}
+  
+  ---
+  *Analysis powered by advanced multimodal RAG technology*
+
+# Error handling
+error_handling:
+  max_retries: 3
+  retry_delay: 2
+  fallback_response: "I encountered an error processing the multimodal content. Please check the document format and try again."
+
+# Conversation management
+conversation:
+  max_history: 15
+  context_window: 8000
+  include_tool_calls: true
+  include_metadata: true
+  multimodal_context: true

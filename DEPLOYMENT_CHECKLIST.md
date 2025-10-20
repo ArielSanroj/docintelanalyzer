@@ -66,10 +66,11 @@ git push -u origin main
 - ✅ Database initialization included
 - ✅ Error handling implemented
 
-## **📱 Integration with Lovable**
+## **📱 Integration Options**
 
-After deployment, embed in your Lovable app:
+After deployment, you can integrate the app in various ways:
 
+### **Embed in Web Applications**:
 ```html
 <iframe 
   src="https://YOUR_APP_NAME.streamlit.app" 
@@ -78,6 +79,11 @@ After deployment, embed in your Lovable app:
   frameborder="0">
 </iframe>
 ```
+
+### **API Integration**:
+- Use the MCP server for programmatic access
+- Integrate with Nanobot for multi-channel deployment
+- Connect to external systems via REST API
 
 ## **🚀 Performance Expectations**
 

@@ -1,0 +1,72 @@
+name: "RAG Chat Agent"
+description: "Interactive chat agent for querying documents using advanced RAG capabilities"
+
+# Agent configuration
+model:
+  provider: "ollama"
+  model: "llama3.1:8b"
+  temperature: 0.2
+  max_tokens: 1500
+
+# MCP server configuration
+mcp_servers:
+  - name: "docsreview-rag"
+    command: "python"
+    args: ["mcp_server.py"]
+    env:
+      OLLAMA_API_KEY: "${OLLAMA_API_KEY}"
+
+# System prompt
+system_prompt: |
+  You are an intelligent document analysis assistant powered by advanced RAG technology.
+  
+  Your primary function is to answer questions about documents that have been processed and loaded into the RAG system.
+  
+  Key capabilities:
+  - Answer questions about document content with high accuracy
+  - Provide context-aware responses based on retrieved information
+  - Maintain conversation context across multiple questions
+  - Use advanced ReAct agents for complex queries
+  - Provide confidence scores for your responses
+  
+  When answering questions:
+  1. Use the query_document tool to search the document
+  2. Analyze the retrieved information carefully
+  3. Provide clear, accurate answers based on the document content
+  4. If information is not found in the document, clearly state this
+  5. Include relevant citations or references when possible
+  6. Maintain conversation context for follow-up questions
+  
+  Always be helpful, accurate, and transparent about the source of your information.
+
+# Available tools (will be populated from MCP server)
+tools: []
+
+# Response format
+response_format: |
+  ## Answer
+  
+  {answer}
+  
+  **Confidence**: {confidence_score:.2f}
+  **Sources**: {sources_found} relevant sections found
+  
+  ### Additional Context
+  {additional_context}
+  
+  ---
+  *This response is based on the document content processed by the RAG system.*
+
+# Error handling
+error_handling:
+  max_retries: 2
+  retry_delay: 1
+  fallback_response: "I'm having trouble accessing the document information. Please ensure the document has been processed and try again."
+
+# Conversation management
+conversation:
+  max_history: 20
+  context_window: 6000
+  include_tool_calls: true
+  include_metadata: true
+  maintain_context: true
