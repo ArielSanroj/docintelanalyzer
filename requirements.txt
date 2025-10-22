@@ -19,6 +19,8 @@ scikit-learn==1.5.1
 numpy>=1.24.0,<2.0
 torch==2.4.1  # CPU-only by default; install CUDA build separately if needed
 rank-bm25==0.2.2
+faiss-cpu==1.8.0  # Vector store
+chromadb==0.4.24  # Alternative vector store
 
 # Document Processing & OCR
 PyMuPDF==1.24.9  # fitz
@@ -29,14 +31,44 @@ lxml==5.3.0  # Parser for BS4
 
 # HTTP & API
 requests>=2.31.0
-raganything>=1.0.0
+httpx>=0.27.0  # Async HTTP client
+aiohttp>=3.9.0  # Async HTTP server
 
 # Database & Utils
-# sqlite3 is built-in to Python (no pip package)
-# If migrating to SQLAlchemy: uncomment the following
-# sqlalchemy==2.0.32
+sqlalchemy==2.0.32  # Database ORM
+alembic==1.13.0  # Database migrations
+redis>=5.0.0  # Caching
+psycopg2-binary>=2.9.0  # PostgreSQL adapter
 
-# Dev Tools (optional, for VS Code)
-black==24.8.0
-isort==5.13.2
-pytest==8.3.2
+# Configuration & Validation
+pydantic>=2.0.0  # Data validation
+pydantic-settings>=2.0.0  # Settings management
+python-multipart>=0.0.6  # File uploads
+
+# Monitoring & Logging
+structlog>=23.0.0  # Structured logging
+sentry-sdk>=2.0.0  # Error tracking
+prometheus-client>=0.19.0  # Metrics
+
+# Security
+cryptography>=41.0.0  # Encryption
+bcrypt>=4.0.0  # Password hashing
+python-jose[cryptography]>=3.3.0  # JWT tokens
+
+# Testing & Development
+pytest>=8.3.2
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.0
+pytest-benchmark>=4.0.0
+black>=24.8.0
+isort>=5.13.2
+ruff>=0.1.0
+mypy>=1.8.0
+bandit>=1.7.0
+safety>=2.3.0
+semgrep>=1.45.0
+
+# Performance & Optimization
+uvloop>=0.19.0  # Fast event loop
+orjson>=3.9.0  # Fast JSON
+ujson>=5.8.0  # Fast JSON alternative

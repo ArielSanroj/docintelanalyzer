@@ -21,7 +21,9 @@ class OllamaLLM(BaseLanguageModel):
         super().__init__(**kwargs)
         self._model_name = model  # Use _model_name to avoid conflict with BaseLanguageModel.model
         self._base_url = base_url
-        self._api_key = os.getenv('OLLAMA_API_KEY', 'c6f1e109560b4b098ff80b99c5942d42.DdN4aonYSge8plew0dvp3XO_')
+        self._api_key = os.getenv('OLLAMA_API_KEY')
+        if not self._api_key:
+            logger.warning("OLLAMA_API_KEY not found in environment variables")
         self._model_loaded = False
         logger.info(f"Initialized Ollama LLM with model: {model}")
         # Pre-load the model to avoid first-request delay
